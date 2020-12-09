@@ -334,6 +334,30 @@ md"""
 ### Transfer operator approach
 """
 
+# ╔═╡ d6727a82-3a6a-11eb-0fa9-7f131ee65966
+function construct_transition_matrix(orbit, n_nodes)
+	P = zeros(n_nodes, n_nodes)
+	n = size(orbit)[2]
+	x_min, x_max = minimum(orbit[1,:]), maximum(orbit[1,:])
+	y_min, y_max = minimum(orbit[1,:]), maximum(orbit[1,:])
+	z_min, z_max = minimum(orbit[1,:]), maximum(orbit[1,:])
+	dx = (x_max - x_min)/n_nodes
+	dy = (x_max - x_min)/n_nodes
+	dz = (x_max - x_min)/n_nodes
+	for i = 1:n-1
+		x, y, z = orbit[:,i]
+		x1, y1, z1 = orbit[:,i+1]
+		n_curr = (x - x_min)/dx
+	end
+end
+
+# ╔═╡ 01dca4be-3a6d-11eb-2f43-658315a5d17e
+begin
+	
+	A = rand(3,3)
+	size(A)[1]
+end
+
 # ╔═╡ Cell order:
 # ╟─7abc4f04-3772-11eb-1c9b-712985ec2af7
 # ╠═b49dd7c8-3772-11eb-3414-bb1f9e84b748
@@ -362,3 +386,5 @@ md"""
 # ╟─6c52e1aa-3a65-11eb-3ebf-6d24b999a3d0
 # ╠═09203cd4-3a67-11eb-3b2a-fd959253ea1f
 # ╠═9268f956-3a6a-11eb-258b-abeddba30664
+# ╠═d6727a82-3a6a-11eb-0fa9-7f131ee65966
+# ╠═01dca4be-3a6d-11eb-2f43-658315a5d17e
