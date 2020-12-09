@@ -4,6 +4,15 @@
 using Markdown
 using InteractiveUtils
 
+# This Pluto notebook uses @bind for interactivity. When running this notebook outside of Pluto, the following 'mock version' of @bind gives bound variables a default value (instead of an error).
+macro bind(def, element)
+    quote
+        local el = $(esc(element))
+        global $(esc(def)) = Core.applicable(Base.get, el) ? Base.get(el) : missing
+        el
+    end
+end
+
 # ╔═╡ b49dd7c8-3772-11eb-3414-bb1f9e84b748
 begin
 	using LaTeXStrings
@@ -66,7 +75,7 @@ end
 # ╔═╡ afd50d1c-3776-11eb-2696-abce7d038b88
 begin
 	x₀ = rand(3)
-	n_steps = 1200
+	n_steps = 1500
 	s = [1.0, 4.0]
 	x₀ = spinup(solenoid, x₀, s, 1000)
 	orbit = run(solenoid, x₀, s, n_steps)
@@ -230,11 +239,100 @@ end
 test_tangent(rand(3), rand(3))
 
 # ╔═╡ 204d842c-39ca-11eb-19fe-9fdffed8d7df
-begin 
+function compute_LEs(s) 
 	n_le = 100
 	x = spinup(solenoid, rand(3), s, n_le)
-	all_LEs(x, s, 1000)
+	return all_LEs(x, s, 1000)
 end
+
+# ╔═╡ 1a147aa8-3a5a-11eb-2717-47f73da03c14
+n_p = 10
+
+# ╔═╡ 10c7b4e2-3a5f-11eb-1505-df9942ddc7d5
+md""" 
+### First parameter variation
+"""
+
+# ╔═╡ 25ab64f0-3a53-11eb-260d-2d71467086fe
+begin
+	les_1 = zeros(3, n_p)
+	s1 = LinRange(1.0, 2.5, n_p)
+	for i = 1:n_p
+		les_1[:,i] = compute_LEs([s1[i], 4.0])
+	end
+	les_1 = les_1'
+	p1 = plot(s1, les_1[:,1], m=:o, xlim=(1.0, 2.6), ylim=(0, 0.7), title="1st LE", leg=false)
+	p2 = plot(s1, les_1[:,2], m=:o, xlim=(1.0, 2.6), ylim=(-2, -1), title="2nd LE", leg=false)
+	p3 = plot(s1, les_1[:,3], m=:o, xlim=(1.0, 2.6), ylim=(-2, -1), title="3rd LE", leg=false)
+	
+	plot(p1, p2, p3, layout = grid(1, 3, widths=[0.3, 0.3, 0.3]))
+end
+
+
+
+# ╔═╡ 24c6af0c-3a5f-11eb-0fd7-135217ab59c5
+md""" 
+### Second parameter variation
+"""
+
+# ╔═╡ 1c2fb750-3a5d-11eb-347c-49a673d2c39b
+begin
+	s2 = LinRange(2.0, 4.5, n_p)
+	les_2 = zeros(n_p, 3)
+	for i = 1:n_p
+		les_2[i,:] = compute_LEs([1.0, s2[i]])
+	end
+	
+	p4 = plot(s2, les_2[:,1], m=:o, xlim=(1.0, 4.6), ylim=(0.5,1.0),title="1st LE", leg=false)
+	p5 = plot(s2, les_2[:,2], m=:o, xlim=(1.0, 4.6), ylim=(-2, -1), title="2nd LE", leg=false)
+	p6 = plot(s2, les_2[:,3], m=:o, xlim=(1.0, 4.6), ylim=(-2, -1), title="3rd LE", leg=false)
+	
+	plot(p4, p5, p6, layout = grid(1, 3, widths=[0.3, 0.3, 0.3]))
+end
+
+# ╔═╡ 9ac38e86-3a60-11eb-2c7c-7b7e43324ac4
+@bind n Slider(1:n_p, show_value=true)
+
+# ╔═╡ ca656df8-3a60-11eb-1e9c-d1f1b6b68a6c
+begin
+	p7 = plot(s2[1:n], les_2[1:n,1], m=:o, ylim=(minimum(les_2[:,1]), maximum(les_2[:,1])), xlim=(minimum(s2), maximum(s2)), title="1st LE", leg=false)
+end
+
+# ╔═╡ 7fc92bb0-3a63-11eb-0eac-5faeeefce124
+begin
+	x₀ .= spinup(solenoid, x₀, [1.0, s2[n]], 500)
+	orbit_s2 = zeros(n_steps, 3, n_p)
+	orbit_s2[:,:,n] = run(solenoid, x₀, [1.0, s2[n]], n_steps)'
+	p8 = plot(orbit_s2[:,1,n], orbit_s2[:,2,n], m=:o, ms=2, linealpha=0, leg=false, xlabel="x", ylabel="y")
+	p9 = plot(orbit_s2[:,2,n], orbit_s2[:,3,n], m=:o, ms=2, linealpha=0, leg=false, xlabel="y", ylabel="z")
+
+	plot(p8, p9, layout = grid(1, 2, widths=[0.5, 0.5]))
+end
+
+# ╔═╡ 6e529432-3a65-11eb-2226-15734d6aa29b
+@bind m Slider(1:n_p, show_value=true)
+
+# ╔═╡ 6c52e1aa-3a65-11eb-3ebf-6d24b999a3d0
+begin
+	p10 = plot(s1[1:m], les_1[1:m,1], m=:o, xlim=(minimum(s1), maximum(s1)), ylim=(minimum(les_1[:,1]), maximum(les_1[:,1])),title="1st LE", xlabel=L"s_1", ylabel=L"\lambda_1", leg=false)
+end
+
+# ╔═╡ 09203cd4-3a67-11eb-3b2a-fd959253ea1f
+begin
+	x₀ .= spinup(solenoid, x₀, [s1[m], 4.0], 5000)
+	orbit_s1 = zeros(n_steps, 3, n_p)
+	orbit_s1[:,:,m] = run(solenoid, x₀, [s1[m], 4.0], n_steps)'
+	p11 = plot(orbit_s1[:,1,m], orbit_s1[:,2,m], m=:o, ms=2, linealpha=0, xlim=(-3.1,3.1), ylim=(-3.1,3.1),leg=false, xlabel="x", ylabel="y")
+	p12 = plot(orbit_s1[:,2,m], orbit_s1[:,3,m], m=:o, ms=2, linealpha=0,
+		xlim=(-2.5,2.5), ylim=(-1.,1.),leg=false, xlabel="y", ylabel="z")
+
+	plot(p11, p12, layout = grid(1, 2, widths=[0.5, 0.5]))
+end
+
+# ╔═╡ 9268f956-3a6a-11eb-258b-abeddba30664
+md""" 
+### Transfer operator approach
+"""
 
 # ╔═╡ Cell order:
 # ╟─7abc4f04-3772-11eb-1c9b-712985ec2af7
@@ -252,3 +350,15 @@ end
 # ╠═83546b9c-39c2-11eb-0772-ff2a7d6ed0fe
 # ╠═bbe580e0-3972-11eb-0fc7-4d95edb00ca0
 # ╠═204d842c-39ca-11eb-19fe-9fdffed8d7df
+# ╠═1a147aa8-3a5a-11eb-2717-47f73da03c14
+# ╠═10c7b4e2-3a5f-11eb-1505-df9942ddc7d5
+# ╠═25ab64f0-3a53-11eb-260d-2d71467086fe
+# ╠═24c6af0c-3a5f-11eb-0fd7-135217ab59c5
+# ╠═1c2fb750-3a5d-11eb-347c-49a673d2c39b
+# ╠═9ac38e86-3a60-11eb-2c7c-7b7e43324ac4
+# ╠═ca656df8-3a60-11eb-1e9c-d1f1b6b68a6c
+# ╠═7fc92bb0-3a63-11eb-0eac-5faeeefce124
+# ╠═6e529432-3a65-11eb-2226-15734d6aa29b
+# ╟─6c52e1aa-3a65-11eb-3ebf-6d24b999a3d0
+# ╠═09203cd4-3a67-11eb-3b2a-fd959253ea1f
+# ╠═9268f956-3a6a-11eb-258b-abeddba30664
