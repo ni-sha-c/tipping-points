@@ -44,7 +44,7 @@ function run(method, x₀, s, n_steps)
 	n = 1
 	orbit = zeros(3, n_steps)
 	x₁ = copy(x₀)
-	while n < n_steps
+	while n <= n_steps
 		x₁ = method(x₁, s)
 		orbit[:,n] = x₁
 		n += 1
@@ -66,7 +66,7 @@ end
 # ╔═╡ afd50d1c-3776-11eb-2696-abce7d038b88
 begin
 	x₀ = rand(3)
-	n_steps = 10000
+	n_steps = 1200
 	s = [1.0, 4.0]
 	x₀ = spinup(solenoid, x₀, s, 1000)
 	orbit = run(solenoid, x₀, s, n_steps)
@@ -176,8 +176,8 @@ function test_tangent(x, v, s=[1.,4.],ϵ=1.e-6)
 end
 
 # ╔═╡ 7395d3e2-38ed-11eb-37e9-d734cb6fffae
-function LE(x₀, v₀, s, n_steps)
-	v = copy(v₀)
+function first_LE(x₀, s, n_steps)
+	v = rand(3)
 	x = copy(x₀)
 	λ = 0.
 	for n = 1:n_steps
@@ -190,28 +190,51 @@ function LE(x₀, v₀, s, n_steps)
 	return λ
 end
 
-# ╔═╡ 7d245e0e-390d-11eb-28dd-7b1504da3c0f
-LE(rand(3), rand(3), [1.4, 1], 3500)
-
-# ╔═╡ 8f58770a-395c-11eb-364d-5b3e302667a1
-begin
-	v₀ = rand(3)
-	#x₀ = rand(3)
-	v = copy(v₀)
+# ╔═╡ 83546b9c-39c2-11eb-0772-ff2a7d6ed0fe
+function all_LEs(x₀, s, n_steps)
+	v₁ = rand(3)
+	v₂ = zeros(3)
+	v₃ = zeros(3)
+	Q = Matrix([v₁ v₂ v₃])
+	R = similar(Q)
 	x = copy(x₀)
-	#n_steps = 100
-	#s = [1.,4.]
-	x = [1.0, 1.0, 1.]
-	v = [1.0, 0.,0.]
-	for n = 1:1
-		v .= tangent(x, v)
+	λ = zeros(3)
+	n_spinup = 100
+	α = 0.
+	for n = 1:n_steps + n_spinup
+		Q .= Matrix([v₁ v₂ v₃])
+		A = qr(Q)
+		Q .= Array(A.Q)
+		R .= A.R
+		@show R[1,1], norm(v₁)
+		if n > n_spinup
+			λ .+= log.(abs.(diag(R)))/n_steps
+			α += log(norm(v₁))/n_steps
+		end	
+		
+		v₁ .= Q[:,1]
+		v₂ .= Q[:,2]
+		v₃ .= Q[:,3]
+		
+		
+		v₁ .= tangent(x, v₁)
+		v₂ .= tangent(x, v₂)
+		v₃ .= tangent(x, v₃)
 		x .= solenoid(x, s)
 	end
-	
+	@show α
+	return λ
 end
 
 # ╔═╡ bbe580e0-3972-11eb-0fc7-4d95edb00ca0
 test_tangent(rand(3), rand(3))
+
+# ╔═╡ 204d842c-39ca-11eb-19fe-9fdffed8d7df
+begin 
+	n_le = 100
+	x = spinup(solenoid, rand(3), s, n_le)
+	all_LEs(x, s, 1000)
+end
 
 # ╔═╡ Cell order:
 # ╟─7abc4f04-3772-11eb-1c9b-712985ec2af7
@@ -226,6 +249,6 @@ test_tangent(rand(3), rand(3))
 # ╠═c619c9e4-390a-11eb-3819-3d17ff4aecd2
 # ╠═ca2dbc4e-3972-11eb-15e0-c595f6d2d087
 # ╠═7395d3e2-38ed-11eb-37e9-d734cb6fffae
-# ╠═7d245e0e-390d-11eb-28dd-7b1504da3c0f
-# ╠═8f58770a-395c-11eb-364d-5b3e302667a1
+# ╠═83546b9c-39c2-11eb-0772-ff2a7d6ed0fe
 # ╠═bbe580e0-3972-11eb-0fc7-4d95edb00ca0
+# ╠═204d842c-39ca-11eb-19fe-9fdffed8d7df
