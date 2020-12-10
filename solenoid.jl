@@ -338,15 +338,14 @@ md"""
 function construct_transition_matrix(orbit, n_nodes)
 	P = zeros(n_nodes^3, n_nodes^3)
 	n = size(orbit)[2]
-	eps = 0.1
+	eps = 0.01
 	x_min, x_max = minimum(orbit[1,:]) - eps, maximum(orbit[1,:]) + eps
 	y_min, y_max = minimum(orbit[2,:]) - eps, maximum(orbit[2,:]) + eps
 	z_min, z_max = minimum(orbit[3,:]) - eps, maximum(orbit[3,:]) + eps
 	dx = (x_max - x_min)/n_nodes
 	dy = (y_max - y_min)/n_nodes
 	dz = (z_max - z_min)/n_nodes
-	@show dx, dy, dz
-	@show x_min, x_max, y_min, y_max, z_min, z_max
+	
 	
 	x, y, z = orbit[:,1]
 	pre_ind_x = ceil(Int64,(x - x_min)/dx)
@@ -364,7 +363,6 @@ function construct_transition_matrix(orbit, n_nodes)
 		
 		ind = ind_x + (ind_y-1)*n_nodes + (ind_z-1)*n_nodes*n_nodes
 		
-		@show ind_x, ind_y, ind_z
 		
 		P[pre_ind, ind] += 1
 		pre_ind = ind
@@ -380,15 +378,22 @@ end
 
 # ╔═╡ 78d0a378-3a76-11eb-038f-5b319336a827
 begin
-	test_orbit = rand(3, 4)
-	construct_transition_matrix(test_orbit, 2)
+	test_orbit = run(solenoid, x₀, s, 10000000)
+	P = construct_transition_matrix(test_orbit, 6);
 end
 
-# ╔═╡ 272a7c76-3a99-11eb-3927-cd87952f57df
-test_orbit[:,10]
+# ╔═╡ 4144af3c-3b07-11eb-028c-6ddd7b0c000d
+rpr = eigvals(P)
 
-# ╔═╡ 01dca4be-3a6d-11eb-2f43-658315a5d17e
-construct_transition_matrix(test_orbit, 2)
+# ╔═╡ 57453d90-3b06-11eb-1834-19f0f3481337
+begin
+	p13 = plot(real(rpr), imag(rpr), xlim=(-1,1), ylim=(-1,1), linealpha=0, ms=2, m=:o, leg=false, aspect_ratio=1, title="Eigenvalues of Frobenius-Perron operator")
+	t_arr = 0.:pi/20:2π
+	plot!(p13, cos.(t_arr), sin.(t_arr))
+end
+
+# ╔═╡ 9d2331a2-3b07-11eb-3f5f-0bdf673ff93d
+
 
 # ╔═╡ Cell order:
 # ╟─7abc4f04-3772-11eb-1c9b-712985ec2af7
@@ -420,5 +425,6 @@ construct_transition_matrix(test_orbit, 2)
 # ╠═9268f956-3a6a-11eb-258b-abeddba30664
 # ╠═d6727a82-3a6a-11eb-0fa9-7f131ee65966
 # ╠═78d0a378-3a76-11eb-038f-5b319336a827
-# ╠═272a7c76-3a99-11eb-3927-cd87952f57df
-# ╠═01dca4be-3a6d-11eb-2f43-658315a5d17e
+# ╠═4144af3c-3b07-11eb-028c-6ddd7b0c000d
+# ╠═57453d90-3b06-11eb-1834-19f0f3481337
+# ╠═9d2331a2-3b07-11eb-3f5f-0bdf673ff93d
