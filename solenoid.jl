@@ -338,44 +338,57 @@ md"""
 function construct_transition_matrix(orbit, n_nodes)
 	P = zeros(n_nodes^3, n_nodes^3)
 	n = size(orbit)[2]
-	x_min, x_max = minimum(orbit[1,:]), maximum(orbit[1,:])
-	y_min, y_max = minimum(orbit[1,:]), maximum(orbit[1,:])
-	z_min, z_max = minimum(orbit[1,:]), maximum(orbit[1,:])
+	eps = 0.1
+	x_min, x_max = minimum(orbit[1,:]) - eps, maximum(orbit[1,:]) + eps
+	y_min, y_max = minimum(orbit[2,:]) - eps, maximum(orbit[2,:]) + eps
+	z_min, z_max = minimum(orbit[3,:]) - eps, maximum(orbit[3,:]) + eps
 	dx = (x_max - x_min)/n_nodes
 	dy = (y_max - y_min)/n_nodes
 	dz = (z_max - z_min)/n_nodes
-	for i = 1:n-1
+	@show dx, dy, dz
+	@show x_min, x_max, y_min, y_max, z_min, z_max
+	
+	x, y, z = orbit[:,1]
+	pre_ind_x = ceil(Int64,(x - x_min)/dx)
+	pre_ind_y = ceil(Int64,(y - y_min)/dy)
+	pre_ind_z = ceil(Int64,(z - z_min)/dz)
+	pre_ind = pre_ind_x + (pre_ind_y-1)*n_nodes + (pre_ind_z-1)*n_nodes*n_nodes
+	
+	for i = 2:n
+		
 		x, y, z = orbit[:,i]
-		x1, y1, z1 = orbit[:,i+1]
 		
-		ind_x = ceil(Int64,(x1 - x_min)/dx)
-		ind_y = ceil(Int64,(y1 - y_min)/dy)
-		ind_z = ceil(Int64,(z1 - z_min)/dz)
-		
-		pre_ind_x = ceil(Int64,(x - x_min)/dx)
-		pre_ind_y = ceil(Int64,(y - y_min)/dy)
-		pre_ind_z = ceil(Int64,(z - z_min)/dz)
+		ind_x = ceil(Int64,(x - x_min)/dx)
+		ind_y = ceil(Int64,(y - y_min)/dy)
+		ind_z = ceil(Int64,(z - z_min)/dz)
 		
 		ind = ind_x + (ind_y-1)*n_nodes + (ind_z-1)*n_nodes*n_nodes
-		pre_ind = pre_ind_x + (pre_ind_y-1)*n_nodes + (pre_ind_z-1)*n_nodes*n_nodes
+		
+		@show ind_x, ind_y, ind_z
 		
 		P[pre_ind, ind] += 1
+		pre_ind = ind
 	end
 	for i = 1:n_nodes^3
-		P[:, i] ./= sum(P[:,i]) 
+		a = sum(P[:,i])
+		if a > 0
+			P[:, i] ./= sum(P[:,i]) 
+		end
 	end
 	return P'
 end
 
 # ╔═╡ 78d0a378-3a76-11eb-038f-5b319336a827
-floor(Int64,1/4)
+begin
+	test_orbit = rand(3, 4)
+	construct_transition_matrix(test_orbit, 2)
+end
+
+# ╔═╡ 272a7c76-3a99-11eb-3927-cd87952f57df
+test_orbit[:,10]
 
 # ╔═╡ 01dca4be-3a6d-11eb-2f43-658315a5d17e
-begin
-	
-	A = [1 2 3; 4. 5 6]
-	sum(A,dims=2)
-end
+construct_transition_matrix(test_orbit, 2)
 
 # ╔═╡ Cell order:
 # ╟─7abc4f04-3772-11eb-1c9b-712985ec2af7
@@ -387,7 +400,7 @@ end
 # ╠═3a605d5e-3776-11eb-34ff-67296e7637f3
 # ╠═a4a93482-39b1-11eb-0753-c5aeb0eda8ae
 # ╠═5720aa0c-38ed-11eb-073e-2d5e0332329d
-# ╠═c619c9e4-390a-11eb-3819-3d17ff4aecd2
+# ╟─c619c9e4-390a-11eb-3819-3d17ff4aecd2
 # ╠═ca2dbc4e-3972-11eb-15e0-c595f6d2d087
 # ╠═7395d3e2-38ed-11eb-37e9-d734cb6fffae
 # ╠═83546b9c-39c2-11eb-0772-ff2a7d6ed0fe
@@ -398,8 +411,8 @@ end
 # ╠═25ab64f0-3a53-11eb-260d-2d71467086fe
 # ╠═24c6af0c-3a5f-11eb-0fd7-135217ab59c5
 # ╠═1c2fb750-3a5d-11eb-347c-49a673d2c39b
-# ╠═9ac38e86-3a60-11eb-2c7c-7b7e43324ac4
-# ╠═ca656df8-3a60-11eb-1e9c-d1f1b6b68a6c
+# ╟─9ac38e86-3a60-11eb-2c7c-7b7e43324ac4
+# ╟─ca656df8-3a60-11eb-1e9c-d1f1b6b68a6c
 # ╠═7fc92bb0-3a63-11eb-0eac-5faeeefce124
 # ╠═6e529432-3a65-11eb-2226-15734d6aa29b
 # ╟─6c52e1aa-3a65-11eb-3ebf-6d24b999a3d0
@@ -407,4 +420,5 @@ end
 # ╠═9268f956-3a6a-11eb-258b-abeddba30664
 # ╠═d6727a82-3a6a-11eb-0fa9-7f131ee65966
 # ╠═78d0a378-3a76-11eb-038f-5b319336a827
+# ╠═272a7c76-3a99-11eb-3927-cd87952f57df
 # ╠═01dca4be-3a6d-11eb-2f43-658315a5d17e
