@@ -342,14 +342,29 @@ function construct_transition_matrix(orbit, n_nodes)
 	y_min, y_max = minimum(orbit[1,:]), maximum(orbit[1,:])
 	z_min, z_max = minimum(orbit[1,:]), maximum(orbit[1,:])
 	dx = (x_max - x_min)/n_nodes
-	dy = (x_max - x_min)/n_nodes
-	dz = (x_max - x_min)/n_nodes
+	dy = (y_max - y_min)/n_nodes
+	dz = (z_max - z_min)/n_nodes
 	for i = 1:n-1
 		x, y, z = orbit[:,i]
 		x1, y1, z1 = orbit[:,i+1]
-		n_curr = (x - x_min)/dx
+		
+		ind_x = ceil(Int64,(x1 - x_min)/dx)
+		ind_y = ceil(Int64,(y1 - y_min)/dy)
+		ind_z = ceil(Int64,(z1 - z_min)/dz)
+		
+		pre_ind_x = ceil(Int64,(x - x_min)/dx)
+		pre_ind_y = ceil(Int64,(y - y_min)/dy)
+		pre_ind_z = ceil(Int64,(z - z_min)/dz)
+		
+		ind = ind_x + (ind_y-1)*n_nodes + (ind_z-1)*n_nodes*n_nodes
+		pre_ind = pre_ind_x + (pre_ind_y-1)*n_nodes + (pre_ind_z-1)*n_nodes*n_nodes
+		
+		
 	end
 end
+
+# ╔═╡ 78d0a378-3a76-11eb-038f-5b319336a827
+floor(Int64,1/4)
 
 # ╔═╡ 01dca4be-3a6d-11eb-2f43-658315a5d17e
 begin
@@ -387,4 +402,5 @@ end
 # ╠═09203cd4-3a67-11eb-3b2a-fd959253ea1f
 # ╠═9268f956-3a6a-11eb-258b-abeddba30664
 # ╠═d6727a82-3a6a-11eb-0fa9-7f131ee65966
+# ╠═78d0a378-3a76-11eb-038f-5b319336a827
 # ╠═01dca4be-3a6d-11eb-2f43-658315a5d17e
