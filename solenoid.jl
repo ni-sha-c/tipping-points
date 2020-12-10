@@ -336,7 +336,7 @@ md"""
 
 # ╔═╡ d6727a82-3a6a-11eb-0fa9-7f131ee65966
 function construct_transition_matrix(orbit, n_nodes)
-	P = zeros(n_nodes, n_nodes)
+	P = zeros(n_nodes^3, n_nodes^3)
 	n = size(orbit)[2]
 	x_min, x_max = minimum(orbit[1,:]), maximum(orbit[1,:])
 	y_min, y_max = minimum(orbit[1,:]), maximum(orbit[1,:])
@@ -359,8 +359,12 @@ function construct_transition_matrix(orbit, n_nodes)
 		ind = ind_x + (ind_y-1)*n_nodes + (ind_z-1)*n_nodes*n_nodes
 		pre_ind = pre_ind_x + (pre_ind_y-1)*n_nodes + (pre_ind_z-1)*n_nodes*n_nodes
 		
-		
+		P[pre_ind, ind] += 1
 	end
+	for i = 1:n_nodes^3
+		P[:, i] ./= sum(P[:,i]) 
+	end
+	return P'
 end
 
 # ╔═╡ 78d0a378-3a76-11eb-038f-5b319336a827
@@ -369,8 +373,8 @@ floor(Int64,1/4)
 # ╔═╡ 01dca4be-3a6d-11eb-2f43-658315a5d17e
 begin
 	
-	A = rand(3,3)
-	size(A)[1]
+	A = [1 2 3; 4. 5 6]
+	sum(A,dims=2)
 end
 
 # ╔═╡ Cell order:
