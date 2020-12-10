@@ -446,7 +446,7 @@ end
 
 # ╔═╡ 9268f956-3a6a-11eb-258b-abeddba30664
 md""" 
-### Transfer operator approach
+### Frobenius-Perron Operator
 """
 
 # ╔═╡ d6727a82-3a6a-11eb-0fa9-7f131ee65966
@@ -493,7 +493,7 @@ end
 
 # ╔═╡ 78d0a378-3a76-11eb-038f-5b319336a827
 begin
-	n_nodes = 8
+	n_nodes = 5
 	P1 = zeros(n_nodes^3, n_nodes^3, n_p)
 	for (i, s1i) in enumerate(s1)
 		@show s1i
@@ -547,6 +547,38 @@ begin
 	plot!(p20, cos.(t_arr), sin.(t_arr))
 end
 
+# ╔═╡ 3d95608e-3b2f-11eb-2960-f11e81d48a29
+begin
+	P1_r_p = zeros(n_nodes^3, n_nodes^3, n_p)
+	prob_arr = 0.2:0.2:1
+	n_prob = length(prob_arr)
+	for (i, p_i) in enumerate(prob_arr)
+		
+		x = spinup(solenoid, rand(3), [2.0, 4.0], 1000)
+		test_orbit = run(random_solenoid, x, [2.0, 4.0], 2000000, p_i)
+		P1_r_p[:,:,i]  = construct_transition_matrix(test_orbit, n_nodes)
+	end
+end
+
+# ╔═╡ e2dfc004-3b32-11eb-3c1f-d927eec4318e
+begin
+	rpr1_r_p = 1im*zeros(n_nodes^3, n_p)
+	for i =1:n_prob
+		rpr1_r_p[:,i] = eigvals(P1_r_p[:,:,i])
+	end
+end
+
+# ╔═╡ 88fc686c-3b32-11eb-03ac-31d9d41b1230
+@bind k Slider(1:n_prob, show_value=true)
+
+# ╔═╡ 44c0692c-3b33-11eb-1776-c1fa4d07ed14
+begin
+	p21 = plot(real(rpr1_r_p[:,k]), imag(rpr1_r_p[:,k]), xlim=(-1,1.1), ylim=(-1,1), linealpha=0, ms=2, m=:o, leg=false, aspect_ratio=1)
+	plot!(p21, cos.(t_arr), sin.(t_arr))
+	rpr_slow = rpr1_r_p[abs.(rpr1_r_p[:,k]) .> 0.4,k]
+	plot!(p21, real.(rpr_slow), imag.(rpr_slow), m=:p, ms=4, linealpha=0,color=:red)
+end
+
 # ╔═╡ Cell order:
 # ╟─7abc4f04-3772-11eb-1c9b-712985ec2af7
 # ╠═b49dd7c8-3772-11eb-3414-bb1f9e84b748
@@ -586,6 +618,10 @@ end
 # ╠═9caf2aa8-3b2c-11eb-3d20-11289e17689f
 # ╠═4144af3c-3b07-11eb-028c-6ddd7b0c000d
 # ╠═db1230b0-3b2c-11eb-2c97-c31cd04d89b1
-# ╟─84a7b078-3b0f-11eb-1b67-5f903684d8a8
+# ╠═84a7b078-3b0f-11eb-1b67-5f903684d8a8
 # ╠═57453d90-3b06-11eb-1834-19f0f3481337
 # ╠═9d2331a2-3b07-11eb-3f5f-0bdf673ff93d
+# ╠═3d95608e-3b2f-11eb-2960-f11e81d48a29
+# ╠═e2dfc004-3b32-11eb-3c1f-d927eec4318e
+# ╠═88fc686c-3b32-11eb-03ac-31d9d41b1230
+# ╠═44c0692c-3b33-11eb-1776-c1fa4d07ed14
