@@ -49,11 +49,11 @@ function solenoid(x, s)
 end
 
 # ╔═╡ 1f1702b4-3b22-11eb-2013-d7d91678263e
-function random_solenoid(x, s)
+function random_solenoid(x, s, p=0.5)
 	
 	s₀, s₁ = s[1], s[2]
 	#s₀ = 2s₀
-	if rand() < 0.5 
+	if rand() < p 
 		s₀ = 2s₀
 	end
 	r = sqrt(x[1]*x[1] + x[2]*x[2])
@@ -79,6 +79,19 @@ function run(method, x₀, s, n_steps)
 	x₁ = copy(x₀)
 	while n <= n_steps
 		x₁ = method(x₁, s)
+		orbit[:,n] = x₁
+		n += 1
+	end
+	return orbit
+end
+
+# ╔═╡ 5777b732-3b2e-11eb-2fe8-35b50f9c6651
+function run(method, x₀, s, n_steps, p)
+	n = 1
+	orbit = zeros(3, n_steps)
+	x₁ = copy(x₀)
+	while n <= n_steps
+		x₁ = method(x₁, s, p)
 		orbit[:,n] = x₁
 		n += 1
 	end
@@ -480,7 +493,7 @@ end
 
 # ╔═╡ 78d0a378-3a76-11eb-038f-5b319336a827
 begin
-	n_nodes = 10
+	n_nodes = 8
 	P1 = zeros(n_nodes^3, n_nodes^3, n_p)
 	for (i, s1i) in enumerate(s1)
 		@show s1i
@@ -490,11 +503,31 @@ begin
 	end
 end
 
+# ╔═╡ 9caf2aa8-3b2c-11eb-3d20-11289e17689f
+begin
+	
+	P1_r = zeros(n_nodes^3, n_nodes^3, n_p)
+	for (i, s1i) in enumerate(s1)
+		@show s1i
+		x = spinup(solenoid, rand(3), [s1i, 4.0], 1000)
+		test_orbit = run(random_solenoid, x, [s1i, 4.0], 2000000)
+		P1_r[:,:,i]  = construct_transition_matrix(test_orbit, n_nodes)
+	end
+end
+
 # ╔═╡ 4144af3c-3b07-11eb-028c-6ddd7b0c000d
 begin
 	rpr1 = 1im*zeros(n_nodes^3, n_p)
 	for i =1:n_p
 		rpr1[:,i] = eigvals(P1[:,:,i])
+	end
+end
+
+# ╔═╡ db1230b0-3b2c-11eb-2c97-c31cd04d89b1
+begin
+	rpr1_r = 1im*zeros(n_nodes^3, n_p)
+	for i =1:n_p
+		rpr1_r[:,i] = eigvals(P1_r[:,:,i])
 	end
 end
 
@@ -509,7 +542,10 @@ begin
 end
 
 # ╔═╡ 9d2331a2-3b07-11eb-3f5f-0bdf673ff93d
-
+begin
+	p20 = plot(real(rpr1_r[:,j]), imag(rpr1_r[:,j]), xlim=(-1,1), ylim=(-1,1), linealpha=0, ms=2, m=:o, leg=false, aspect_ratio=1, title="Eigenvalues of Frobenius-Perron operator")
+	plot!(p20, cos.(t_arr), sin.(t_arr))
+end
 
 # ╔═╡ Cell order:
 # ╟─7abc4f04-3772-11eb-1c9b-712985ec2af7
@@ -517,6 +553,7 @@ end
 # ╠═f8e62384-3772-11eb-23fb-41462d88e988
 # ╠═1f1702b4-3b22-11eb-2013-d7d91678263e
 # ╠═9d23a890-3773-11eb-1d5e-295158261eea
+# ╠═5777b732-3b2e-11eb-2fe8-35b50f9c6651
 # ╠═86f96d6c-39b6-11eb-3e44-e3a3d68a6957
 # ╠═afd50d1c-3776-11eb-2696-abce7d038b88
 # ╠═3a605d5e-3776-11eb-34ff-67296e7637f3
@@ -546,7 +583,9 @@ end
 # ╠═9268f956-3a6a-11eb-258b-abeddba30664
 # ╠═d6727a82-3a6a-11eb-0fa9-7f131ee65966
 # ╠═78d0a378-3a76-11eb-038f-5b319336a827
+# ╠═9caf2aa8-3b2c-11eb-3d20-11289e17689f
 # ╠═4144af3c-3b07-11eb-028c-6ddd7b0c000d
-# ╠═84a7b078-3b0f-11eb-1b67-5f903684d8a8
+# ╠═db1230b0-3b2c-11eb-2c97-c31cd04d89b1
+# ╟─84a7b078-3b0f-11eb-1b67-5f903684d8a8
 # ╠═57453d90-3b06-11eb-1834-19f0f3481337
 # ╠═9d2331a2-3b07-11eb-3f5f-0bdf673ff93d
