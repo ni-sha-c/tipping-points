@@ -259,6 +259,46 @@ function all_LEs(x₀, s, n_steps)
 	return λ
 end
 
+# ╔═╡ fcbb4b38-3b25-11eb-3557-8979ae004fb0
+function all_random_LEs(x₀, s, n_steps,p=0.5)
+	v₁ = rand(3)
+	v₂ = zeros(3)
+	v₃ = zeros(3)
+	Q = Matrix([v₁ v₂ v₃])
+	R = similar(Q)
+	x = copy(x₀)
+	λ = zeros(3)
+	n_spinup = 100
+	α = 0.
+	s₀, s₁ = s
+	for n = 1:n_steps + n_spinup
+		Q .= Matrix([v₁ v₂ v₃])
+		A = qr(Q)
+		Q .= Array(A.Q)
+		R .= A.R
+		if n > n_spinup
+			λ .+= log.(abs.(diag(R)))/n_steps
+			α += log(norm(v₁))/n_steps
+		end	
+		
+		v₁ .= Q[:,1]
+		v₂ .= Q[:,2]
+		v₃ .= Q[:,3]
+		
+		
+		v₁ .= tangent(x, v₁, [s₀, s₁])
+		v₂ .= tangent(x, v₂, [s₀, s₁])
+		v₃ .= tangent(x, v₃, [s₀, s₁])
+		s₀ = s[1]
+		if rand() < p
+			s₀ = 2s₀
+		end
+		x .= solenoid(x, [s₀, s₁])
+	end
+	@show α
+	return λ
+end
+
 # ╔═╡ bbe580e0-3972-11eb-0fc7-4d95edb00ca0
 test_tangent(rand(3), rand(3))
 
@@ -267,6 +307,13 @@ function compute_LEs(s)
 	n_le = 100
 	x = spinup(solenoid, rand(3), s, n_le)
 	return all_LEs(x, s, 1000)
+end
+
+# ╔═╡ e5328cfe-3b25-11eb-29ca-b376069a083a
+function compute_random_LEs(s,p=0.5) 
+	n_le = 100
+	x = spinup(solenoid, rand(3), s, n_le)
+	return all_random_LEs(x, s, 3000, p)
 end
 
 # ╔═╡ 1a147aa8-3a5a-11eb-2717-47f73da03c14
@@ -294,6 +341,22 @@ end
 
 
 
+# ╔═╡ d2ec20b8-3b26-11eb-0f23-9d84da28194c
+begin
+	les_r1 = zeros(3, n_p)
+	for i = 1:n_p
+		les_r1[:,i] = compute_random_LEs([s1[i], 4.0],0.9)
+	end
+	les_r1 = les_r1'
+	p14 = plot(s1, les_r1[:,1], m=:o, title="1st LE", leg=false)
+	p15 = plot(s1, les_r1[:,2], m=:o, title="2nd LE", leg=false)
+	p16 = plot(s1, les_r1[:,3], m=:o, title="3rd LE", leg=false)
+	
+	plot(p14, p15, p16, layout = grid(1, 3, widths=[0.3, 0.3, 0.3]))
+end
+
+
+
 # ╔═╡ 24c6af0c-3a5f-11eb-0fd7-135217ab59c5
 md""" 
 ### Second parameter variation
@@ -312,6 +375,21 @@ begin
 	p6 = plot(s2, les_2[:,3], m=:o, title="3rd LE", leg=false)
 	
 	plot(p4, p5, p6, layout = grid(1, 3, widths=[0.3, 0.3, 0.3]))
+end
+
+# ╔═╡ 96387e4c-3b2a-11eb-0d3a-cdc94eaa8f9f
+begin
+	
+	les_r2 = zeros(n_p, 3)
+	for i = 1:n_p
+		les_r2[i,:] = compute_random_LEs([1.0, s2[i]])
+	end
+	
+	p17 = plot(s2, les_r2[:,1], m=:o,title="1st LE", leg=false)
+	p18 = plot(s2, les_r2[:,2], m=:o, title="2nd LE", leg=false)
+	p19 = plot(s2, les_r2[:,3], m=:o, title="3rd LE", leg=false)
+	
+	plot(p17, p18, p19, layout = grid(1, 3, widths=[0.3, 0.3, 0.3]))
 end
 
 # ╔═╡ 9ac38e86-3a60-11eb-2c7c-7b7e43324ac4
@@ -448,13 +526,17 @@ end
 # ╟─ca2dbc4e-3972-11eb-15e0-c595f6d2d087
 # ╟─7395d3e2-38ed-11eb-37e9-d734cb6fffae
 # ╠═83546b9c-39c2-11eb-0772-ff2a7d6ed0fe
+# ╠═fcbb4b38-3b25-11eb-3557-8979ae004fb0
 # ╠═bbe580e0-3972-11eb-0fc7-4d95edb00ca0
 # ╠═204d842c-39ca-11eb-19fe-9fdffed8d7df
+# ╠═e5328cfe-3b25-11eb-29ca-b376069a083a
 # ╠═1a147aa8-3a5a-11eb-2717-47f73da03c14
 # ╠═10c7b4e2-3a5f-11eb-1505-df9942ddc7d5
 # ╠═25ab64f0-3a53-11eb-260d-2d71467086fe
+# ╠═d2ec20b8-3b26-11eb-0f23-9d84da28194c
 # ╠═24c6af0c-3a5f-11eb-0fd7-135217ab59c5
 # ╠═1c2fb750-3a5d-11eb-347c-49a673d2c39b
+# ╠═96387e4c-3b2a-11eb-0d3a-cdc94eaa8f9f
 # ╟─9ac38e86-3a60-11eb-2c7c-7b7e43324ac4
 # ╟─ca656df8-3a60-11eb-1e9c-d1f1b6b68a6c
 # ╠═7fc92bb0-3a63-11eb-0eac-5faeeefce124
