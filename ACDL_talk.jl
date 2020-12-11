@@ -152,6 +152,11 @@ In hyperbolic systems, $P$ may not be compact. But, we nevertheless try to appro
 
 """
 
+# ╔═╡ d4e0a42e-3b6d-11eb-15b7-2bdd92e1c775
+md"""
+We do observe the signature of the change in the eigenvalues of the Ulam matrix
+"""
+
 # ╔═╡ 941de504-3b5f-11eb-1e98-c52dda487540
 md"""
 ### Function Library
@@ -556,6 +561,38 @@ begin
 	plot!(p20, cos.(t_arr), sin.(t_arr))
 end
 
+# ╔═╡ a4e5b578-3b6d-11eb-28fe-e7f6a15d4e01
+begin
+	P1_r_p = zeros(n_nodes^3, n_nodes^3, n_p)
+	prob_arr = 0.:0.2:1
+	n_prob = length(prob_arr)
+	for (i, p_i) in enumerate(prob_arr)
+		
+		x = spinup(solenoid, rand(3), [2.0, 4.0], 1000)
+		test_orbit = run(random_solenoid, x, [2.0, 4.0], 2000000, p_i)
+		P1_r_p[:,:,i]  = construct_transition_matrix(test_orbit, n_nodes)
+	end
+end
+
+# ╔═╡ cad960a4-3b6d-11eb-34a7-ef92cdff64b9
+begin
+	rpr1_r_p = 1im*zeros(n_nodes^3, n_p)
+	for i =1:n_prob
+		rpr1_r_p[:,i] = eigvals(P1_r_p[:,:,i])
+	end
+end
+
+# ╔═╡ 7df3b8e0-3b6d-11eb-1826-efba4a24abe9
+@bind k Slider(1:n_prob, show_value=true)
+
+# ╔═╡ bd5fa59a-3b6d-11eb-2267-7d10d1d41bca
+begin
+	p21 = plot(real(rpr1_r_p[:,k]), imag(rpr1_r_p[:,k]), xlim=(-1,1.1), ylim=(-1,1), linealpha=0, ms=2, m=:o, leg=false, aspect_ratio=1)
+	plot!(p21, cos.(t_arr), sin.(t_arr))
+	rpr_slow = rpr1_r_p[abs.(rpr1_r_p[:,k]) .> 0.4,k]
+	plot!(p21, real.(rpr_slow), imag.(rpr_slow), m=:p, ms=4, linealpha=0,color=:red)
+end
+
 # ╔═╡ Cell order:
 # ╟─f19a3c4c-3b48-11eb-1d00-fb92a48cfba2
 # ╟─a2ea8866-3b60-11eb-0001-ff9253168fdd
@@ -571,28 +608,33 @@ end
 # ╟─b0d93120-3b65-11eb-244d-db50471180a6
 # ╟─e2e3875e-3b67-11eb-2227-cb921c13814c
 # ╟─fadc9fee-3b67-11eb-0ff2-6ff1b81fd678
-# ╠═ca68ef88-3b68-11eb-1dc4-11574ee92984
-# ╠═c8bff564-3b68-11eb-134a-598082ea5f4f
-# ╠═aa67bff0-3b6a-11eb-31ad-9decdab06358
+# ╟─ca68ef88-3b68-11eb-1dc4-11574ee92984
+# ╟─c8bff564-3b68-11eb-134a-598082ea5f4f
+# ╟─aa67bff0-3b6a-11eb-31ad-9decdab06358
 # ╟─debf5cd6-3b6a-11eb-1496-7b9e0ab7e406
 # ╟─6e265c80-3b6b-11eb-1a9d-05a92e38c045
 # ╟─78911fc0-3b6b-11eb-1d24-0dfa6c85c165
 # ╟─9895cece-3b6b-11eb-21ee-af0764651cc9
 # ╟─b04f349c-3b6b-11eb-3539-c5dd7bbd7a72
 # ╟─b9e78fc2-3b6b-11eb-2023-b138c8257cf2
-# ╠═d3c330ae-3b6b-11eb-385f-1d5068855986
+# ╟─d3c330ae-3b6b-11eb-385f-1d5068855986
 # ╠═e87c0494-3b6b-11eb-2234-abcc80a22b2a
-# ╠═fd84434c-3b6b-11eb-2b6b-fbe51b601ea6
-# ╠═264bb3a0-3b6c-11eb-1d2d-476662b86ced
+# ╟─fd84434c-3b6b-11eb-2b6b-fbe51b601ea6
+# ╟─264bb3a0-3b6c-11eb-1d2d-476662b86ced
 # ╟─3e1ccf50-3b6c-11eb-04ec-b51fba6a64c9
 # ╟─578c1748-3b6c-11eb-0e4e-c5f2b86d0558
-# ╠═8225f49c-3b6c-11eb-334f-056b4a1e4d4d
-# ╠═b30bdba8-3b6c-11eb-3551-39397136cdb7
-# ╠═bdcc30ce-3b6c-11eb-064a-0791a37f9bbd
+# ╟─8225f49c-3b6c-11eb-334f-056b4a1e4d4d
+# ╟─b30bdba8-3b6c-11eb-3551-39397136cdb7
+# ╟─bdcc30ce-3b6c-11eb-064a-0791a37f9bbd
 # ╠═e28bf2e6-3b6c-11eb-1ce2-51345710e0ef
 # ╠═f1a7adc4-3b6c-11eb-1588-eb2a5c6a400a
-# ╠═4ae256aa-3b6d-11eb-19fb-251716c33c79
+# ╟─4ae256aa-3b6d-11eb-19fb-251716c33c79
 # ╠═35df2fa6-3b6d-11eb-210a-c5146dbec4b4
+# ╠═a4e5b578-3b6d-11eb-28fe-e7f6a15d4e01
+# ╠═cad960a4-3b6d-11eb-34a7-ef92cdff64b9
+# ╟─7df3b8e0-3b6d-11eb-1826-efba4a24abe9
+# ╠═bd5fa59a-3b6d-11eb-2267-7d10d1d41bca
+# ╟─d4e0a42e-3b6d-11eb-15b7-2bdd92e1c775
 # ╟─941de504-3b5f-11eb-1e98-c52dda487540
 # ╟─0c378bdc-3b60-11eb-371a-89bb7f6d480f
 # ╟─f9250b62-3b5f-11eb-011a-ab7e41db50df
