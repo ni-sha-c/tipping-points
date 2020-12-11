@@ -129,8 +129,28 @@ md"""
 ### Second parameter variation
 """
 
-# ╔═╡ fd84434c-3b6b-11eb-2b6b-fbe51b601ea6
+# ╔═╡ 578c1748-3b6c-11eb-0e4e-c5f2b86d0558
+md"""
+LEs in this case are not indicative of marked changes in the attractor.
+"""
 
+# ╔═╡ 8225f49c-3b6c-11eb-334f-056b4a1e4d4d
+md""" 
+### Frobenius-Perron Approach: a measure of global parametric dependence? 
+"""
+
+# ╔═╡ b30bdba8-3b6c-11eb-3551-39397136cdb7
+md"""
+The Frobenius-Perron operator $P:L^1\to L^1$ evolves probability densities under $\varphi$. For any set $A$, and a bounded function $g$,
+ $\int_A g\; P f \; dx = \int_{\varphi^{-1} A} f\; (g\circ\varphi)\; dx.$
+This operator lets us analyze ensemble behavior.
+"""
+
+# ╔═╡ bdcc30ce-3b6c-11eb-064a-0791a37f9bbd
+md"""
+In hyperbolic systems, $P$ may not be compact. But, we nevertheless try to approximate this operator on a finite-dimensional indicator function basis. Numerically this can be done by dividing up the domain into smaller cells and constructing the Markov transition matrix 
+
+"""
 
 # ╔═╡ 941de504-3b5f-11eb-1e98-c52dda487540
 md"""
@@ -377,6 +397,29 @@ end
 # ╔═╡ b9e78fc2-3b6b-11eb-2023-b138c8257cf2
 @bind n Slider(1:n_p, show_value=true)
 
+# ╔═╡ fd84434c-3b6b-11eb-2b6b-fbe51b601ea6
+@bind m Slider(1:n_p, show_value=true)
+
+# ╔═╡ 264bb3a0-3b6c-11eb-1d2d-476662b86ced
+begin
+	p10 = plot(s1[1:m], les_1[1:m,1], m=:o, xlim=(minimum(s1), maximum(s1)), ylim=(minimum(les_1[:,1]), maximum(les_1[:,1])),title="1st LE", xlabel=L"s_1", ylabel=L"\lambda_1", leg=false)
+end
+
+# ╔═╡ 3e1ccf50-3b6c-11eb-04ec-b51fba6a64c9
+begin
+	x₀ .= spinup(solenoid, x₀, [s1[m], 4.0], 5000)
+	orbit_s1 = zeros(n_steps, 3, n_p)
+	orbit_s1[:,:,m] = run(solenoid, x₀, [s1[m], 4.0], n_steps)'
+	p11 = plot(orbit_s1[:,1,m], orbit_s1[:,2,m], m=:o, ms=2, linealpha=0, xlim=(-7.5,7.5), ylim=(-7.5,7.5),leg=false, xlabel="x", ylabel="y")
+	p12 = plot(orbit_s1[:,2,m], orbit_s1[:,3,m], m=:o, ms=2, linealpha=0,
+		xlim=(-7.5,7.5), ylim=(-1.,1.),leg=false, xlabel="y", ylabel="z")
+
+	plot(p11, p12, layout = grid(1, 2, widths=[0.5, 0.5]))
+end
+
+# ╔═╡ 4ae256aa-3b6d-11eb-19fb-251716c33c79
+@bind j Slider(1:n_p, show_value=true)
+
 # ╔═╡ 9895cece-3b6b-11eb-21ee-af0764651cc9
 begin
 	s2 = LinRange(2.0, 10., n_p)
@@ -444,6 +487,75 @@ begin
 	plot(p17, p18, p19, layout = grid(1, 3, widths=[0.3, 0.3, 0.3]))
 end
 
+# ╔═╡ c7493b10-3b6c-11eb-21ce-274b1436b801
+function construct_transition_matrix(orbit, n_nodes)
+	P = zeros(n_nodes^3, n_nodes^3)
+	n = size(orbit)[2]
+	eps = 0.01
+	x_min, x_max = minimum(orbit[1,:]) - eps, maximum(orbit[1,:]) + eps
+	y_min, y_max = minimum(orbit[2,:]) - eps, maximum(orbit[2,:]) + eps
+	z_min, z_max = minimum(orbit[3,:]) - eps, maximum(orbit[3,:]) + eps
+	dx = (x_max - x_min)/n_nodes
+	dy = (y_max - y_min)/n_nodes
+	dz = (z_max - z_min)/n_nodes
+	
+	
+	x, y, z = orbit[:,1]
+	pre_ind_x = ceil(Int64,(x - x_min)/dx)
+	pre_ind_y = ceil(Int64,(y - y_min)/dy)
+	pre_ind_z = ceil(Int64,(z - z_min)/dz)
+	pre_ind = pre_ind_x + (pre_ind_y-1)*n_nodes + (pre_ind_z-1)*n_nodes*n_nodes
+	
+	for i = 2:n
+		
+		x, y, z = orbit[:,i]
+		
+		ind_x = ceil(Int64,(x - x_min)/dx)
+		ind_y = ceil(Int64,(y - y_min)/dy)
+		ind_z = ceil(Int64,(z - z_min)/dz)
+		
+		ind = ind_x + (ind_y-1)*n_nodes + (ind_z-1)*n_nodes*n_nodes
+		
+		
+		P[ind, pre_ind] += 1
+		pre_ind = ind
+	end
+	for i = 1:n_nodes^3
+		a = sum(P[:,i])
+		if a > 0
+			P[:, i] ./= sum(P[:,i]) 
+		end
+	end
+	return P'
+end
+
+# ╔═╡ e28bf2e6-3b6c-11eb-1ce2-51345710e0ef
+begin
+	n_nodes = 5
+	P1_r = zeros(n_nodes^3, n_nodes^3, n_p)
+	for (i, s1i) in enumerate(s1)
+		@show s1i
+		x = spinup(solenoid, rand(3), [s1i, 4.0], 1000)
+		test_orbit = run(random_solenoid, x, [s1i, 4.0], 2000000)
+		P1_r[:,:,i]  = construct_transition_matrix(test_orbit, n_nodes)
+	end
+end
+
+# ╔═╡ f1a7adc4-3b6c-11eb-1588-eb2a5c6a400a
+begin
+	rpr1_r = 1im*zeros(n_nodes^3, n_p)
+	for i =1:n_p
+		rpr1_r[:,i] = eigvals(P1_r[:,:,i])
+	end
+end
+
+# ╔═╡ 35df2fa6-3b6d-11eb-210a-c5146dbec4b4
+begin
+	p20 = plot(real(rpr1_r[:,j]), imag(rpr1_r[:,j]), xlim=(-1,1), ylim=(-1,1), linealpha=0, ms=2, m=:o, leg=false, aspect_ratio=1)
+	t_arr = 0.:pi/20:2π
+	plot!(p20, cos.(t_arr), sin.(t_arr))
+end
+
 # ╔═╡ Cell order:
 # ╟─f19a3c4c-3b48-11eb-1d00-fb92a48cfba2
 # ╟─a2ea8866-3b60-11eb-0001-ff9253168fdd
@@ -471,6 +583,16 @@ end
 # ╠═d3c330ae-3b6b-11eb-385f-1d5068855986
 # ╠═e87c0494-3b6b-11eb-2234-abcc80a22b2a
 # ╠═fd84434c-3b6b-11eb-2b6b-fbe51b601ea6
+# ╠═264bb3a0-3b6c-11eb-1d2d-476662b86ced
+# ╟─3e1ccf50-3b6c-11eb-04ec-b51fba6a64c9
+# ╟─578c1748-3b6c-11eb-0e4e-c5f2b86d0558
+# ╠═8225f49c-3b6c-11eb-334f-056b4a1e4d4d
+# ╠═b30bdba8-3b6c-11eb-3551-39397136cdb7
+# ╠═bdcc30ce-3b6c-11eb-064a-0791a37f9bbd
+# ╠═e28bf2e6-3b6c-11eb-1ce2-51345710e0ef
+# ╠═f1a7adc4-3b6c-11eb-1588-eb2a5c6a400a
+# ╠═4ae256aa-3b6d-11eb-19fb-251716c33c79
+# ╠═35df2fa6-3b6d-11eb-210a-c5146dbec4b4
 # ╟─941de504-3b5f-11eb-1e98-c52dda487540
 # ╟─0c378bdc-3b60-11eb-371a-89bb7f6d480f
 # ╟─f9250b62-3b5f-11eb-011a-ab7e41db50df
@@ -482,3 +604,4 @@ end
 # ╟─871c0df8-3b68-11eb-3431-578143a5007b
 # ╟─4a247006-3b6b-11eb-3c7d-d16cea1ba192
 # ╟─56233a2c-3b6b-11eb-2deb-cdad6683a639
+# ╟─c7493b10-3b6c-11eb-21ce-274b1436b801
