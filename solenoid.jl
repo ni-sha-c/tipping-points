@@ -449,6 +449,21 @@ md"""
 ### Frobenius-Perron Operator
 """
 
+
+# ╔═╡ 0fbdd468-3b37-11eb-071a-392c849e79d1
+md"""
+The Frobenius-Perron operator $P:L^1\to L^1$ evolves probability densities under $\varphi$. For any set $A$, and a bounded function $g$,
+ $\int_A g\; P f \; dx = \int_{\varphi^{-1} A} f\; (g\circ\varphi)\; dx.$
+This operator lets us analyze ensemble behavior.
+"""
+
+# ╔═╡ fecf7c70-3b3a-11eb-1617-17a2f958a00c
+md"""
+In hyperbolic systems, $P$ may not be compact. But, we nevertheless try to approximate this operator on a finite-dimensional indicator function basis.
+One way to obtain a finite-dimensional 
+
+"""
+
 # ╔═╡ d6727a82-3a6a-11eb-0fa9-7f131ee65966
 function construct_transition_matrix(orbit, n_nodes)
 	P = zeros(n_nodes^3, n_nodes^3)
@@ -550,7 +565,7 @@ end
 # ╔═╡ 3d95608e-3b2f-11eb-2960-f11e81d48a29
 begin
 	P1_r_p = zeros(n_nodes^3, n_nodes^3, n_p)
-	prob_arr = 0.2:0.2:1
+	prob_arr = 0.:0.2:1
 	n_prob = length(prob_arr)
 	for (i, p_i) in enumerate(prob_arr)
 		
@@ -613,6 +628,8 @@ end
 # ╟─6c52e1aa-3a65-11eb-3ebf-6d24b999a3d0
 # ╠═09203cd4-3a67-11eb-3b2a-fd959253ea1f
 # ╠═9268f956-3a6a-11eb-258b-abeddba30664
+# ╠═0fbdd468-3b37-11eb-071a-392c849e79d1
+# ╠═fecf7c70-3b3a-11eb-1617-17a2f958a00c
 # ╠═d6727a82-3a6a-11eb-0fa9-7f131ee65966
 # ╠═78d0a378-3a76-11eb-038f-5b319336a827
 # ╠═9caf2aa8-3b2c-11eb-3d20-11289e17689f
